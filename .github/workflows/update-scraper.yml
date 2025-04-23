@@ -1,7 +1,7 @@
 name: Hava durumu güncellemesi
 on:
   schedule:
-    - cron: '0 0 * * * #her gün 0:00 da çalışır'
+    - cron: '0 0 * * * ' #her gün 0:00 da çalışır
   workflow_dispatch:
 jobs:
   update-weather:
