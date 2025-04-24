@@ -10,21 +10,38 @@ headers={
 response=requests.get(url,headers=headers)
 soup=BeautifulSoup(response.content,"html.parser")
 temp_tag=soup.find("span",attrs={"data-testid":"TemperatureValue"})
-if temp_tag: 
-    temp=temp_tag.text
-    now=datetime.now().strftime("½Y-%M-%d %H:%M")
-    data=pd.DataFrame([[now,temp]],columns=["Datetime","Temperature"])
-
- #CSV dosyasını kontrol eder varsa üzerine ekler yoksa oluşturur
+if temp_tag:
+    temp_text = temp_tag.text.strip().replace("°", "")
     try:
-        existing_data=pd.read_csv("weather_data.csv")
-        data=pd.concat([existing_data,data],ignore_index=True)
-    except FileNotFoundError:
-        pass
-
-    data.to_csv("weather_data.csv",index=False)
-    print ("Hava durumu verisi kaydedildi.")
-
+        temperature = int(temp_text)
+    except ValueError:
+        temperature = None
 else:
+    temperature = None
 
-    print("Hava durumu verisi alınamadı.")
+# Tarihi al
+today = datetime.now().strftime("%Y-%m-%d")
+
+# Veriyi hazırla
+data = {
+    "tarih": [today],
+    "sehir": ["İstanbul"],
+    "sicaklik": [temperature]
+}
+
+# Yeni veriyi DataFrame'e aktar
+new_df = pd.DataFrame(data)
+
+# CSV dosyası varsa oku, yoksa yeni oluştur
+try:
+    df = pd.read_csv("weather_data.csv")
+    # Eğer bugünkü veri zaten varsa tekrar eklememesi için kontrol et
+    if today not in df["tarih"].values:
+        df = pd.concat([df, new_df], ignore_index=True)
+        df.to_csv("weather_data.csv", index=False)
+        print("Yeni veri eklendi.")
+    else:
+        print("Bugünün verisi zaten mevcut.")
+except FileNotFoundError:
+    new_df.to_csv("weather_data.csv", index=False)
+    print("Yeni dosya oluşturuldu ve veri kaydedildi.")
